@@ -104,3 +104,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+*.xml
+
+healthyfruit/.idea/healthyfruit.iml
