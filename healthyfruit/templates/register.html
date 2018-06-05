@@ -23,12 +23,13 @@
 				<a href="#">登录</a>
 			</div>
 			<div class="reg_form clearfix">
-				<form>
+				<form method="post" action="register_handle">
+                    {% csrf_token %}
 				<ul>
 					<li>
 						<label>用户名:</label>
 						<input type="text" name="user_name" id="user_name">
-						<span class="error_tip">提示信息</span>
+			 			<span class="error_tip">提示信息</span>
 					</li>					
 					<li>
 						<label>密码:</label>
