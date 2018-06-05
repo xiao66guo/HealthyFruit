@@ -19,9 +19,9 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('tinymce/', include('tinymce.urls')),  # 富文本编辑器
-    path('user/', include(('apps.user.urls', 'user'), namespace='user')),  # 用户模块
-    path('shop/', include(('apps.shop.urls', 'shop'), namespace='shop')),  # 购物车模块
-    path('order/', include(('apps.order.urls', 'order'), namespace='order')),  # 订单模块
-    path('goods/', include(('apps.goods.urls', 'goods'), namespace='goods')),  # 商品模块
+    path('user/', include(('user.urls', 'user'), namespace='user')),  # 用户模块
+    path('shop/', include(('shop.urls', 'shop'), namespace='shop')),  # 购物车模块
+    path('order/', include(('order.urls', 'order'), namespace='order')),  # 订单模块
+    path('goods/', include(('goods.urls', 'goods'), namespace='goods')),  # 商品模块
 
 ]

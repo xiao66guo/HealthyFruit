@@ -11,10 +11,12 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+# 设置应用的基本路径
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -37,11 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'tinymce',          # 富文本编辑器
-    'apps.user',        # 用户模块
-    'apps.order',       # 商品订单模块
-    'apps.shop',        # 购物车模块
-    'apps.goods',       # 商品模块
+    'tinymce',     # 富文本编辑器
+    'user',        # 用户模块
+    'order',       # 商品订单模块
+    'shop',        # 购物车模块
+    'goods',       # 商品模块
 
 ]
 
