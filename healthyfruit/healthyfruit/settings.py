@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'tinymce',          # 富文本编辑器
     'apps.user',        # 用户模块
     'apps.order',       # 商品订单模块
     'apps.shop',        # 购物车模块
@@ -127,3 +128,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# 设置静态文件的存放目录
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+# 富文本编辑器的配置
+TINYMCE_DEFAULT_CONFIG = {
+    'theme': 'advanced',
+    'width': 600,
+    'height': 400,
+}
