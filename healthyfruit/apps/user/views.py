@@ -27,6 +27,17 @@ def register_handle(request):
     if not re.match(r'^[a-z0-9][\w.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
         return render( request, 'register.html', {'error': '对不起，您输入的邮箱不正确！😭😭😭'} )
 
+    # 对注册的用户名进行判断是否已经存在
+    try:
+        user_info = User.objects.get(username=username)
+    except User.DoseNotExist:
+        # 用户名不存在
+        user_info = None
+
+    if user_info:
+        # 用户名已存在
+        return render( request, 'register.html', {'error': '对不起，您输入的用户名已存在！😭😭😭'} )
+
     # 业务处理:进行注册操作
     # User.objects.create(username=username, password=password, email=email)
     user_info = User.objects.create_user(username, password, email)
