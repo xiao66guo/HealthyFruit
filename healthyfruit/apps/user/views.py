@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import HttpResponse
 from django.views.generic import View
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from django.conf import settings
 from user.models import User
 import re
 
@@ -86,6 +88,17 @@ class RegisterView(View):
         user_info = User.objects.create_user(username, password, email)
         user_info.is_active = 0
         user_info.save()
+
+        # 在用户注册成功后，发送激活邮件（链接）/user/active/token信息
+            # 创建一个加密类对象（使用 itsdangerous 生成激活的 token 信息
+        seria = Serializer(settings.SECRET_KEY, 3600)
+        user_id = {'confirm': user_info.id}
+            # 进行加密并返回一个 bytes 类型
+        result_token = seria.dumps(user_id)
+            # 转换 str 类型
+        result_token = result_token.decode()
+
+
 
         # 注册成功后跳转页面
         return redirect(reverse('goods:index'))
