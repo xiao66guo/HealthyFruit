@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.http import HttpResponse
 from django.views.generic import View
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import SignatureExpired
 from django.conf import settings
 from user.models import User
 import re
@@ -103,3 +104,29 @@ class RegisterView(View):
         # 注册成功后跳转页面
         return redirect(reverse('goods:index'))
 
+
+# 创建激活邮件的视图
+class ActiveView(View):
+    # 激活处理
+    def get(self, request, token):
+        # 对加密后的 token 进行解密处理
+        seria = Serializer(settings.SECRET_KEY, 3600)
+        try:
+            info = seria.loads(token)
+            # 获取激活的用户ID
+            user_id = info['confirm']
+            # 激活用户
+            user = User.objects.get(id=user_id)
+            user.is_active = 1
+            user.save()
+            # 激活后的应答
+            return redirect(reverse('user:login'))
+        except SignatureExpired as error:
+            # 激活链接已失效（提示用户链接已失效，再次点击重新发送激活链接）
+            return HttpResponse('<h1>激活链接已失效</h1>')
+
+
+# 登录页面
+class LoginView(View):
+    def get(self, request):
+        return render(request, 'login.html')
