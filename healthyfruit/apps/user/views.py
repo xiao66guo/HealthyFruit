@@ -133,7 +133,14 @@ class ActiveView(View):
 # 登录页面
 class LoginView(View):
     def get(self, request):
-        return render(request, 'login.html')
+        # 从 cookie 中加载用户名
+        if 'username' in request.COOKIES:
+            username = request.COOKIES['username']
+            checked = 'checked'
+        else:
+            username = ''
+            checked = ''
+        return render(request, 'login.html', {'username': username, 'checked': checked})
 
     # 登录校验
     def post(self, request):
@@ -153,8 +160,16 @@ class LoginView(View):
             if user.is_active:  # 说明账户已激活
                 # 对用户的登录状态进行处理
                 login(request, user)
+                response = redirect(reverse('goods:index'))
 
-                return redirect(reverse('goods:index'))
+                # 判断是否需要记住用户名
+                remember = request.POST.get('remember')
+                if 'on' == remember: # 记住用户名
+                    response.set_cookie('username', username, max_age=7*24*3600)
+                else:   # 清除用户名
+                    response.delete_cookie('username')
+
+                return response
             else:   # 说明账户未激活
                 return render(request, 'login.html', {'error': '对不起，您的账户未激活哦'})
         else:# 用户名和密码错误
