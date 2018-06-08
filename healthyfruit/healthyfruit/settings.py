@@ -165,6 +165,6 @@ CACHES = {
     }
 }
 
-# 设置 redis 存储 Django 的信息
+# 设置 redis 存储 Django 的 session 信息
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
