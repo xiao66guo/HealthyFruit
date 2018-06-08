@@ -153,3 +153,18 @@ EMAIL_HOST_USER = 'xiao66guo@163.com'
 EMAIL_HOST_PASSWORD = 'weixiao1989guo'
 #收件人看到的发件人
 EMAIL_FROM = 'healthyfruit<xiao66guo@163.com>'
+
+# 设置 Django 缓存
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/12",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+# 设置 redis 存储 Django 的信息
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
