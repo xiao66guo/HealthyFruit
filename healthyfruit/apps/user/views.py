@@ -6,6 +6,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import SignatureExpired
 from django.conf import settings
 from celery_tasks.task import send_register_active_email
+from django.contrib.auth import authenticate
 from user.models import User
 import re
 
@@ -87,7 +88,7 @@ class RegisterView(View):
 
         # 业务处理:进行注册操作
         # User.objects.create(username=username, password=password, email=email)
-        user_info = User.objects.create_user(username, password, email)
+        user_info = User.objects.create_user(username, email, password)
         user_info.is_active = 0
         user_info.save()
 
@@ -133,3 +134,27 @@ class ActiveView(View):
 class LoginView(View):
     def get(self, request):
         return render(request, 'login.html')
+
+    # 登录校验
+    def post(self, request):
+        # 接收参数
+        username = request.POST.get('username')
+        password = request.POST.get('pwd')
+        print(username, password)
+
+        # 参数校验
+        if not all([username, password]):
+            return render(request, 'login.html', {'error': '用户名和密码输入不完整'})
+
+        # 业务处理
+        # 根据用户名和密码查找用户的信息
+        user = authenticate(username=username, password=password)
+        print(type(user))
+        if user is not None:
+            # 用户名和密码正确
+            if user.is_active:  # 说明账户已激活
+                return redirect(reverse('goods:index'))
+            else:   # 说明账户未激活
+                return render(request, 'login.html', {'error': '对不起，您的账户未激活哦'})
+        else:# 用户名和密码错误
+            return render(request, 'login.html', {'error': '用户名或密码错误'})
