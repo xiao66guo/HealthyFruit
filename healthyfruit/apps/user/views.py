@@ -207,11 +207,12 @@ class UserAddressView(LoginRequiredView):
     def get(self, request):
         # 获取用户的默认收货地址
         user = request.user
-        try:
-            address = Address.objects.get(user=user, is_default=True)
-        except Address.DoesNotExist:
-            # 用户不存在默认的收货地址
-            address = None
+        # try:
+        #     address = Address.objects.get(user=user, is_default=True)
+        # except Address.DoesNotExist:
+        #     # 用户不存在默认的收货地址
+        #     address = None
+        address = Address.objs.get_default_address(user)
         context = {'page': 'address',
                    'address': address}
         return render(request, 'user_center_site.html', context)
@@ -232,18 +233,19 @@ class UserAddressView(LoginRequiredView):
         # 2.如果没有默认地址，新添加的地址为默认地址
         # 获取登录用户的对象
         user = request.user
-        try:
-            address = Address.objects.get(user=user, is_default=True)
-        except Address.DoesNotExist:
-            # 用户不存在默认的收货地址
-            address = None
+        # try:
+        #     address = Address.objects.get(user=user, is_default=True)
+        # except Address.DoesNotExist:
+        #     # 用户不存在默认的收货地址
+        #     address = None
+        address = Address.objs.get_default_address(user)
 
         is_default = True
         if address:
             is_default = False
 
         # 添加收获地址
-        Address.objects.create(user=user,
+        Address.objs.create(user=user,
                                receiver=receiver,
                                addr=addr,
                                zip_code=zip_code,
