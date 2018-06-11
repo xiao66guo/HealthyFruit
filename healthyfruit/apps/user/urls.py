@@ -1,5 +1,5 @@
 from django.urls import path
-from user.views import RegisterView, ActiveView, LoginView, LogoutView
+from user.views import RegisterView, ActiveView, LoginView, LogoutView, UserInfoView, UserOrderView, UserAddressView
 
 urlpatterns = [
     # path('register', views.register, name='register'),     # 注册页面
@@ -9,4 +9,7 @@ urlpatterns = [
     path('active/<token>', ActiveView.as_view(), name='active'),    # 激活邮件路径
     path('login', LoginView.as_view(), name='login'),               # 登录界面
     path('logout', LogoutView.as_view(), name='logout'),            # 退出页面
+    path('user_info', UserInfoView.as_view(), name='user_info'),    # 用户中心信息页面
+    path('user_order', UserOrderView.as_view(), name='user_order'), # 用户中心订单页面
+    path('user_site', UserAddressView.as_view(), name='user_site'),   # 用户中心地址页面
 ]

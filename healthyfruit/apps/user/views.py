@@ -181,3 +181,25 @@ class LogoutView(View):
     def get(self, request):
         logout(request)
         return redirect(reverse('user:login'))
+
+
+# 用户中心——信息页面
+class UserInfoView(View):
+    def get(self, request):
+        return render(request, 'user_center_info.html', {'page': 'user'})
+
+
+# 用户中心——订单页面
+class UserOrderView(View):
+    def get(self, request):
+        return render(request, 'user_center_order.html', {'page': 'order'})
+
+
+# 用户中心——地址页面
+class UserAddressView(View):
+    def get(self, request):
+        return render(request, 'user_center_site.html', {'page': 'address'})
+
+
+
+
