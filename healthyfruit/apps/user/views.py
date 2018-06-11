@@ -7,7 +7,7 @@ from itsdangerous import SignatureExpired
 from django.conf import settings
 from celery_tasks.task import send_register_active_email
 from django.contrib.auth import authenticate, login, logout
-from user.models import User
+from user.models import User, Address
 import re
 
 # Create your views here.
@@ -205,7 +205,54 @@ class UserOrderView(LoginRequiredView):
 # class UserAddressView(View):
 class UserAddressView(LoginRequiredView):
     def get(self, request):
-        return render(request, 'user_center_site.html', {'page': 'address'})
+        # 获取用户的默认收货地址
+        user = request.user
+        try:
+            address = Address.objects.get(user=user, is_default=True)
+        except Address.DoesNotExist:
+            # 用户不存在默认的收货地址
+            address = None
+        context = {'page': 'address',
+                   'address': address}
+        return render(request, 'user_center_site.html', context)
+
+    # 地址的添加
+    def post(self, request):
+        # 接收提交的参数
+        receiver = request.POST.get('receiver')
+        addr = request.POST.get('addr')
+        zip_code = request.POST.get('zip_code')
+        phone = request.POST.get('phone')
+
+        # 对接受的参数进行判断
+        if not all([receiver, addr, phone]):
+            return render(request, 'user_center_site.html', {'error': '数据不完整，请重新输入'})
+        # 对是否为默认地址进行判断
+        # 1.如果有默认地址，新添加的地址为非默认地址
+        # 2.如果没有默认地址，新添加的地址为默认地址
+        # 获取登录用户的对象
+        user = request.user
+        try:
+            address = Address.objects.get(user=user, is_default=True)
+        except Address.DoesNotExist:
+            # 用户不存在默认的收货地址
+            address = None
+
+        is_default = True
+        if address:
+            is_default = False
+
+        # 添加收获地址
+        Address.objects.create(user=user,
+                               receiver=receiver,
+                               addr=addr,
+                               zip_code=zip_code,
+                               phone=phone,
+                               is_default=is_default)
+        # 对新添加的地址进行刷新
+        return redirect(reverse('user:address'))
+
+
 
 
 
