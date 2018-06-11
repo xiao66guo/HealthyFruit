@@ -186,20 +186,24 @@ class LogoutView(View):
         return redirect(reverse('user:login'))
 
 
+from utils.mini import LoginRequiredView
 # 用户中心——信息页面
-class UserInfoView(View):
+# class UserInfoView(View):
+class UserInfoView(LoginRequiredView):
     def get(self, request):
         return render(request, 'user_center_info.html', {'page': 'info'})
 
 
 # 用户中心——订单页面
-class UserOrderView(View):
+# class UserOrderView(View):
+class UserOrderView(LoginRequiredView):
     def get(self, request):
         return render(request, 'user_center_order.html', {'page': 'order'})
 
 
 # 用户中心——地址页面
-class UserAddressView(View):
+# class UserAddressView(View):
+class UserAddressView(LoginRequiredView):
     def get(self, request):
         return render(request, 'user_center_site.html', {'page': 'address'})
 
