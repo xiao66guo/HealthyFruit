@@ -160,7 +160,10 @@ class LoginView(View):
             if user.is_active:  # 说明账户已激活
                 # 对用户的登录状态进行处理
                 login(request, user)
-                response = redirect(reverse('goods:index'))
+                # 获取 next 参数
+                next_url = request.GET.get('next', reverse('goods:index'))
+
+                response = redirect(next_url)
 
                 # 判断是否需要记住用户名
                 remember = request.POST.get('remember')
@@ -186,7 +189,7 @@ class LogoutView(View):
 # 用户中心——信息页面
 class UserInfoView(View):
     def get(self, request):
-        return render(request, 'user_center_info.html', {'page': 'user'})
+        return render(request, 'user_center_info.html', {'page': 'info'})
 
 
 # 用户中心——订单页面
