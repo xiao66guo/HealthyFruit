@@ -1,7 +1,13 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import HttpResponse
-from user.models import User
+from django.views.generic import View
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import SignatureExpired
+from django.conf import settings
+from celery_tasks.task import send_register_active_email
+from django.contrib.auth import authenticate, login, logout
+from user.models import User, Address
 import re
 
 # Create your views here.
@@ -46,6 +52,210 @@ def register(request):
 
         # 注册成功后跳转页面
         return redirect(reverse('goods:index'))
+
+
+# 创建类视图
+class RegisterView(View):
+    # 显示注册页面
+    def get(self, request):
+        return render(request, 'register.html')
+
+    # 注册处理
+    def post(self, request):
+        # 接收数据
+        username = request.POST.get('user_name')
+        password = request.POST.get('pwd')
+        email = request.POST.get('email')
+
+        # 进行校验(校验数据的完整性)
+        if not all([username, password, email]):
+            return render(request, 'register.html', {'error': '对不起，您输入的内容不完整！😭😭😭'})
+
+        # 校验邮箱的正确性
+        if not re.match(r'^[a-z0-9][\w.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+            return render(request, 'register.html', {'error': '对不起，您输入的邮箱不正确！😭😭😭'})
+
+        # 对注册的用户名进行判断是否已经存在
+        try:
+            user_info = User.objects.get(username=username)
+        except User.DoesNotExist:
+            # 用户名不存在
+            user_info = None
+
+        if user_info:
+            # 用户名已存在
+            return render(request, 'register.html', {'error': '对不起，您输入的用户名已存在！😭😭😭'})
+
+        # 业务处理:进行注册操作
+        # User.objects.create(username=username, password=password, email=email)
+        user_info = User.objects.create_user(username, email, password)
+        user_info.is_active = 0
+        user_info.save()
+
+        # 在用户注册成功后，发送激活邮件（链接）/user/active/token信息
+            # 创建一个加密类对象（使用 itsdangerous 生成激活的 token 信息
+        seria = Serializer(settings.SECRET_KEY, 3600)
+        user_id = {'confirm': user_info.id}
+            # 进行加密并返回一个 bytes 类型
+        result_token = seria.dumps(user_id)
+            # 转换 str 类型
+        result_token = result_token.decode()
+
+        # 使用 celery 发出发送邮件任务
+        send_register_active_email.delay(email, username, result_token)
+
+        # 注册成功后跳转页面
+        return redirect(reverse('goods:index'))
+
+
+# 创建激活邮件的视图
+class ActiveView(View):
+    # 激活处理
+    def get(self, request, token):
+        # 对加密后的 token 进行解密处理
+        seria = Serializer(settings.SECRET_KEY, 3600)
+        try:
+            info = seria.loads(token)
+            # 获取激活的用户ID
+            user_id = info['confirm']
+            # 激活用户
+            user = User.objects.get(id=user_id)
+            user.is_active = 1
+            user.save()
+
+            # 激活后的应答
+            return redirect(reverse('user:login'))
+        except SignatureExpired as error:
+            # 激活链接已失效（提示用户链接已失效，再次点击重新发送激活链接）
+            return HttpResponse('<h1>激活链接已失效</h1>')
+
+
+# 登录页面
+class LoginView(View):
+    def get(self, request):
+        # 从 cookie 中加载用户名
+        if 'username' in request.COOKIES:
+            username = request.COOKIES['username']
+            checked = 'checked'
+        else:
+            username = ''
+            checked = ''
+        return render(request, 'login.html', {'username': username, 'checked': checked})
+
+    # 登录校验
+    def post(self, request):
+        # 接收参数
+        username = request.POST.get('username')
+        password = request.POST.get('pwd')
+
+        # 参数校验
+        if not all([username, password]):
+            return render(request, 'login.html', {'error': '用户名和密码输入不完整'})
+
+        # 业务处理
+        # 根据用户名和密码查找用户的信息
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            # 用户名和密码正确
+            if user.is_active:  # 说明账户已激活
+                # 对用户的登录状态进行处理
+                login(request, user)
+                # 获取 next 参数
+                next_url = request.GET.get('next', reverse('goods:index'))
+
+                response = redirect(next_url)
+
+                # 判断是否需要记住用户名
+                remember = request.POST.get('remember')
+                if 'on' == remember: # 记住用户名
+                    response.set_cookie('username', username, max_age=7*24*3600)
+                else:   # 清除用户名
+                    response.delete_cookie('username')
+
+                return response
+            else:   # 说明账户未激活
+                return render(request, 'login.html', {'error': '对不起，您的账户未激活哦'})
+        else:# 用户名和密码错误
+            return render(request, 'login.html', {'error': '用户名或密码错误'})
+
+
+# 退出页面
+class LogoutView(View):
+    def get(self, request):
+        logout(request)
+        return redirect(reverse('user:login'))
+
+
+from utils.mini import LoginRequiredView
+# 用户中心——信息页面
+# class UserInfoView(View):
+class UserInfoView(LoginRequiredView):
+    def get(self, request):
+        return render(request, 'user_center_info.html', {'page': 'info'})
+
+
+# 用户中心——订单页面
+# class UserOrderView(View):
+class UserOrderView(LoginRequiredView):
+    def get(self, request):
+        return render(request, 'user_center_order.html', {'page': 'order'})
+
+
+# 用户中心——地址页面
+# class UserAddressView(View):
+class UserAddressView(LoginRequiredView):
+    def get(self, request):
+        # 获取用户的默认收货地址
+        user = request.user
+        # try:
+        #     address = Address.objects.get(user=user, is_default=True)
+        # except Address.DoesNotExist:
+        #     # 用户不存在默认的收货地址
+        #     address = None
+        address = Address.objs.get_default_address(user)
+        context = {'page': 'address',
+                   'address': address}
+        return render(request, 'user_center_site.html', context)
+
+    # 地址的添加
+    def post(self, request):
+        # 接收提交的参数
+        receiver = request.POST.get('receiver')
+        addr = request.POST.get('addr')
+        zip_code = request.POST.get('zip_code')
+        phone = request.POST.get('phone')
+
+        # 对接受的参数进行判断
+        if not all([receiver, addr, phone]):
+            return render(request, 'user_center_site.html', {'error': '数据不完整，请重新输入'})
+        # 对是否为默认地址进行判断
+        # 1.如果有默认地址，新添加的地址为非默认地址
+        # 2.如果没有默认地址，新添加的地址为默认地址
+        # 获取登录用户的对象
+        user = request.user
+        # try:
+        #     address = Address.objects.get(user=user, is_default=True)
+        # except Address.DoesNotExist:
+        #     # 用户不存在默认的收货地址
+        #     address = None
+        address = Address.objs.get_default_address(user)
+
+        is_default = True
+        if address:
+            is_default = False
+
+        # 添加收获地址
+        Address.objs.create(user=user,
+                               receiver=receiver,
+                               addr=addr,
+                               zip_code=zip_code,
+                               phone=phone,
+                               is_default=is_default)
+        # 对新添加的地址进行刷新
+        return redirect(reverse('user:address'))
+
+
+
 
 
 
