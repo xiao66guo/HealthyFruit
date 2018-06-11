@@ -18,8 +18,8 @@ class AdressManager(models.Manager):
     """地址模型管理器类"""
     def get_default_address(self, user):
         try:
-            address = Address.objs.get(user=user, is_default=True)
-        except Address.DoesNotExist:
+            address = self.get(user=user, is_default=True)
+        except self.model.DoesNotExist:
             # 用户不存在默认的收货地址
             address = None
         return address
