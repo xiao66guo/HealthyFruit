@@ -191,7 +191,16 @@ from utils.mini import LoginRequiredView
 # class UserInfoView(View):
 class UserInfoView(LoginRequiredView):
     def get(self, request):
-        return render(request, 'user_center_info.html', {'page': 'info'})
+        # 获取登录的用户
+        user = request.user
+        # 获取用户的收货地址信息
+        address = Address.objs.get_default_address(user=user)
+
+        # 获取用户最近浏览的商品信息
+
+        info_content = {'page': 'info',
+                        'address': address}
+        return render(request, 'user_center_info.html', info_content)
 
 
 # 用户中心——订单页面
