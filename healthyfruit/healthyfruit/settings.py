@@ -171,3 +171,12 @@ SESSION_CACHE_ALIAS = "default"
 
 # 指定项目登录页面URL地址
 LOGIN_URL = '/user/login'
+
+# 设置文件存储类
+DEFAULT_FILE_STORAGE = 'utils.fdfs.storage.FDFSStorage'
+
+# 设置FDFS客户端配置文件的路径
+FDFS_CLIENT_CONF = (os.path.join(BASE_DIR, 'utils/fdfs/client.conf'))
+
+# 设置FDFS服务器上Nginx的ip和port
+FDFS_NGINX_URL = 'http://172.16.33.22:8888/'

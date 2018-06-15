@@ -7,7 +7,10 @@ from itsdangerous import SignatureExpired
 from django.conf import settings
 from celery_tasks.task import send_register_active_email
 from django.contrib.auth import authenticate, login, logout
+from goods.models import GoodsSKU
 from user.models import User, Address
+from django_redis import get_redis_connection
+from redis import StrictRedis
 import re
 
 # Create your views here.
@@ -197,9 +200,34 @@ class UserInfoView(LoginRequiredView):
         address = Address.objs.get_default_address(user=user)
 
         # 获取用户最近浏览的商品信息
+        # conn = StrictRedis(host='localhost', port=6379, db=12)
+        conn = get_redis_connection('default')
+        # 拼接list的key
+        history_key = 'history_%d' % user.id
+        # 获取用户最新浏览的5个商品的ID
+        sku_ids = conn.lrange(history_key, 0, 4)
+        # 根据ID获取商品的信息
+        '''
+        # 只需查一次数据库(但是查完之后需要调整顺序）
+        skus = GoodSKU.objects.filter(id_in=sku_ids)
+        # 调整商品信息的顺序
+        sku_li = []
+        for sku_id in sku_ids:
+            for sku in skus:
+                if int(sku_id) == sku.id:
+                    sku_li.append(sku)
+        '''
+
+        # 效率低，需要查5次数据库(但是查完之后的顺序和用户浏览的顺序一致)
+        skus = []
+        for sku_id in sku_ids:
+            # 根据 sku_id 获取商品信息
+            sku = GoodsSKU.objects.get(id=sku_id)
+            skus.append(sku)
 
         info_content = {'page': 'info',
-                        'address': address}
+                        'address': address,
+                        'skus': skus}
         return render(request, 'user_center_info.html', info_content)
 
 
