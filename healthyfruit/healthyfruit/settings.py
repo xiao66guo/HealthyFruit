@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'healthyfruit.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'healthyfruit',
+        'NAME': 'fruits',
         'HOST': 'localhost',
         'PORT': 3306,
         'USER': 'root',
