@@ -1,10 +1,10 @@
 from django.shortcuts import render
 from django.views.generic import View
 from goods.models import GoodsType, IndexGoodsBanner, IndexPromotionBanner, IndexTypeGoodsBanner
+from django_redis import get_redis_connection
+from django.contrib import auth
 
-# Create your views here.
 
-# 首页
 class IndexView(View):
     def get(self, request):
         # 获取商品分类信息
@@ -23,10 +23,20 @@ class IndexView(View):
             type.image_banner = image_banner
         # 获取登录用户的购物车信息
         shop_count = 0
+
+        # 获取user
+        user = request.user
+        # 对用户的登录状态进行判断
+        if user.is_authenticated:
+            # 用户已登录
+            con = get_redis_connection('default')   # StrictRedis
+            shop_key = 'cart_%s'%user.id
+            shop_count = con.hlen(shop_key)
+
         # 上下文
-        content = {'types': types,
+        context = {'types': types,
                    'scroll_banner': scroll_banner,
                    'promotion_banner': promotion_banner,
                    'shop_count': shop_count}
 
-        return render(request, 'index.html', content)
+        return render(request, 'index.html', context)
