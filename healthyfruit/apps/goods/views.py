@@ -2,27 +2,39 @@ from django.shortcuts import render
 from django.views.generic import View
 from goods.models import GoodsType, IndexGoodsBanner, IndexPromotionBanner, IndexTypeGoodsBanner
 from django_redis import get_redis_connection
-from django.contrib import auth
+from django.core.cache import cache
 
 
 class IndexView(View):
     def get(self, request):
-        # 获取商品分类信息
-        types = GoodsType.objects.all()
-        # 获取首页轮播商品信息
-        scroll_banner = IndexGoodsBanner.objects.all().order_by('index')
-        # 获取首页促销活动信息
-        promotion_banner = IndexPromotionBanner.objects.all().order_by('index')
-        # 获取首页分类商品展示信息
-        for type in types:
-            # 查询type种类首页展示的文字商品
-            title_banner = IndexTypeGoodsBanner.objects.filter(type=type, display_type=0).order_by('index')
-            # 查询type种类首页展示的图片image善品信息
-            image_banner = IndexTypeGoodsBanner.objects.filter(type=type, display_type=1).order_by('index')
-            type.title_banner = title_banner
-            type.image_banner = image_banner
-        # 获取登录用户的购物车信息
-        shop_count = 0
+        # 先从缓存中获取数据
+        context = cache.get('index_page_data')
+        if context is None: # 如果缓存中没有数据
+            print('设置首页缓存')
+            # 获取商品分类信息
+            types = GoodsType.objects.all()
+            # 获取首页轮播商品信息
+            scroll_banner = IndexGoodsBanner.objects.all().order_by('index')
+            # 获取首页促销活动信息
+            promotion_banner = IndexPromotionBanner.objects.all().order_by('index')
+            # 获取首页分类商品展示信息
+            for type in types:
+                # 查询type种类首页展示的文字商品
+                title_banner = IndexTypeGoodsBanner.objects.filter(type=type, display_type=0).order_by('index')
+                # 查询type种类首页展示的图片image善品信息
+                image_banner = IndexTypeGoodsBanner.objects.filter(type=type, display_type=1).order_by('index')
+                type.title_banner = title_banner
+                type.image_banner = image_banner
+            # 获取登录用户的购物车信息
+            shop_count = 0
+            # 上下文
+            context = {'types': types,
+                       'scroll_banner': scroll_banner,
+                       'promotion_banner': promotion_banner,
+                       'shop_count': shop_count}
+
+            # 设置缓存 cache.set(缓存的名称，缓存的数据，缓存的有效时间)
+            cache.set('index_page_data', context, 3600)
 
         # 获取user
         user = request.user
@@ -32,11 +44,6 @@ class IndexView(View):
             con = get_redis_connection('default')   # StrictRedis
             shop_key = 'cart_%s'%user.id
             shop_count = con.hlen(shop_key)
-
-        # 上下文
-        context = {'types': types,
-                   'scroll_banner': scroll_banner,
-                   'promotion_banner': promotion_banner,
-                   'shop_count': shop_count}
+            context.update(shop_count=shop_count)
 
         return render(request, 'index.html', context)
