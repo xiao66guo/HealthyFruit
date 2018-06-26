@@ -1,5 +1,6 @@
 from django.contrib import admin
 from goods.models import GoodsType, IndexGoodsBanner, IndexPromotionBanner, IndexTypeGoodsBanner
+from django.core.cache import cache
 
 class BaseAdmin(admin.ModelAdmin):
     # 增加数据或者更新数据是被调用
@@ -12,6 +13,9 @@ class BaseAdmin(admin.ModelAdmin):
         print('更新 generate_static_index.delay')
         generate_static_index.delay()
 
+        # 清楚首页缓存数据
+        cache.delete('index_page_data')
+
     # 删除数据时调用
     def delete_model(self, request, obj):
         super().delete_model(request, obj)
@@ -19,6 +23,8 @@ class BaseAdmin(admin.ModelAdmin):
         # 启动celery
         from celery_tasks.task import generate_static_index
         generate_static_index.delay()
+        # 清除首页缓存
+        cache.delete('index_page_data')
 
 
 class GoodsTypeAdmin(BaseAdmin):
