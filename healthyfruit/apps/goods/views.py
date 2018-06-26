@@ -65,6 +65,9 @@ class DetailView(View):
         order_skus = OrderGoods.objects.filter(sku=sku).exclude(comment='').order_by('-update_time')
         # 获取和商品同一种类的2个新品信息
         new_skus = GoodsSKU.objects.filter(type=sku.type).order_by('create_time')[:2]
+        # 获取和商品同一个SPU的其他规格商品
+        same_spu_skus = GoodsSKU.objects.filter(goods=sku.goods).exclude(id=sku_id)
+
         # 获取登录用户购物车信息
         shop_count = 0
         # 获取user
@@ -80,5 +83,6 @@ class DetailView(View):
                    'sku': sku,
                    'order_skus': order_skus,
                    'new_skus': new_skus,
+                   'same_spu_skus': same_spu_skus,
                    'shop_count': shop_count}
         return render(request, 'detail.html', context)

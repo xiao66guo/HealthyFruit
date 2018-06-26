@@ -25,8 +25,16 @@
 					<input type="text" class="num_show fl" value="1">
 					<a href="javascript:;" class="add fr">+</a>
 					<a href="javascript:;" class="minus fr">-</a>	
-				</div> 
+				</div>
 			</div>
+            <div>
+                <div>其他规格</div>
+                <div>
+                    {% for sku in same_spu_skus %}
+                        <a href="{% url 'goods:detail' sku.id %}">{{ sku.name }}</a>
+                    {% endfor %}
+                </div>
+                </div>
 			<div class="total">总价：<em>{{ sku.price }}元</em></div>
 			<div class="operate_btn">
 				<a href="javascript:;" class="buy_btn">立即购买</a>
