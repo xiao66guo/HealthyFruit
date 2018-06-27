@@ -79,6 +79,14 @@ class DetailView(View):
             shop_key = 'cart_%s' % user.id
             shop_count = con.hlen(shop_key)
 
+            # 添加用户浏览记录(如果用户浏览过商品，可以先从redis对应的list元素中移除商品ID,在将商品ID添加到列表左侧)
+            # 拼接key
+            history_key = 'history_%d'%user.id
+            con.lrem(history_key, 0, sku_id)
+            con.lpush(history_key, sku_id)
+            con.ltrim(history_key, 0, 4)
+
+
         context = {'types': types,
                    'sku': sku,
                    'order_skus': order_skus,

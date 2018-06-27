@@ -48,7 +48,7 @@
 			<div class="new_goods">
 				<h3>新品推荐</h3>
 				<ul>
-                    {% for sku in new_skus  %} }
+                    {% for sku in new_skus  %}
 					<li>
 						<a href="{% url 'goods:detail' sku.id %}"><img src="{{ sku.image.url }}"></a>
 						<h4><a href="{% url 'goods:detail' sku.id %}">{{ sku.name }}</a></h4>
