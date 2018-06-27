@@ -53,7 +53,7 @@
 				    <a href="{% url 'goods:list' type.id skus_page.previous_page_number %}?sort={{ sort }}"><上一页</a>
                 {% endif %}
                 {# 显示页码 #}
-                {% for pindex in skus_page.paginator.page_range %}
+                {% for pindex in pages %}
 				    <a href="{% url 'goods:list' type.id pindex %}?sort={{ sort }}"{% if pindex == skus_page.number %} class="active"{% endif %}>{{ pindex }}</a>
 				{% endfor %}
                 {# 判断是否存在下一页 #}

@@ -123,10 +123,27 @@ class ListView(View):
         from django.core.paginator import Paginator
         paginator = Paginator(skus, 2)
         # 对页码进行处理
-        if paginator.num_pages < int(page):
+        page = int(page)
+        if paginator.num_pages < page:
             page = 1
         # 获取对应页码的内容，返回page对象
-        skus_page = paginator.page(int(page))
+        skus_page = paginator.page(page)
+
+        # 对页码过多时进行处理
+        # 不足5页，显示全部
+        # 当前是前3页，显示1-5页
+        # 当前是后3页，显示后5页
+        # 大于5时，显示当前页的前2页、当前页、当前页的后2页
+        num_pages = paginator.num_pages
+        if num_pages < 5:
+            pages = range(1, num_pages+1)
+        elif page <= 3:
+            pages = range(1, 6)
+        elif num_pages - page <= 2:
+            pages = range(num_pages-4, num_pages+1)
+        else:
+            pages = range(page-2, page+3)
+
 
         # 获取type种类的2个新品信息
         new_skus = GoodsSKU.objects.filter(type=type).order_by('-create_time')[:2]
@@ -146,6 +163,7 @@ class ListView(View):
                    'skus_page': skus_page,
                    'new_skus': new_skus,
                    'sort': sort,
+                   'pages': pages,
                    'shop_count': shop_count}
 
         return render(request, 'list.html', context)
