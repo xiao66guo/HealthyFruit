@@ -6,7 +6,7 @@ from django_redis import get_redis_connection
 from django.core.cache import cache
 from order.models import OrderGoods
 
-# 首页
+# 商品首页
 class IndexView(View):
     def get(self, request):
         # 先从缓存中获取数据
@@ -51,7 +51,7 @@ class IndexView(View):
         return render(request, 'index.html', context)
 
 
-# 详情页面
+# 商品详情页面
 class DetailView(View):
     def get(self, request, sku_id):
         # 获取商品的分类信息
@@ -94,3 +94,58 @@ class DetailView(View):
                    'same_spu_skus': same_spu_skus,
                    'shop_count': shop_count}
         return render(request, 'detail.html', context)
+
+
+# 商品列表页
+class ListView(View):
+    def get(self, request, type_id, page):
+        # 获取商品的分类信息
+        types = GoodsType.objects.all()
+
+        # 获取type_id对应的分类信息type
+        try:
+            type = GoodsType.objects.get(id=type_id)
+        except GoodsType.DoesNotExist:
+            return redirect(reverse('goods:index'))
+
+        # 获取商品排序的方式
+        sort = request.GET.get('sort')
+        # 获取type分类的商品列表信息
+        if sort == 'price':
+            skus = GoodsSKU.objects.filter(type=type).order_by('price')
+        elif sort == 'hot':
+            skus = GoodsSKU.objects.filter(type=type).order_by('-sales')
+        else:   # 默认排序
+            sort = 'default'
+            skus = GoodsSKU.objects.filter(type=type).order_by('-id')
+
+        # 分页处理
+        from django.core.paginator import Paginator
+        paginator = Paginator(skus, 2)
+        # 对页码进行处理
+        if paginator.num_pages < int(page):
+            page = 1
+        # 获取对应页码的内容，返回page对象
+        skus_page = paginator.page(int(page))
+
+        # 获取type种类的2个新品信息
+        new_skus = GoodsSKU.objects.filter(type=type).order_by('-create_time')[:2]
+        # 获取登录用的购物车信息
+        shop_count = 0
+        # 获取user
+        user = request.user
+        # 对用户的登录状态进行判断
+        if user.is_authenticated:
+            # 用户已登录
+            con = get_redis_connection('default')  # StrictRedis
+            shop_key = 'cart_%s' % user.id
+            shop_count = con.hlen(shop_key)
+
+        context = {'types': types,
+                   'type': type,
+                   'skus_page': skus_page,
+                   'new_skus': new_skus,
+                   'sort': sort,
+                   'shop_count': shop_count}
+
+        return render(request, 'list.html', context)
