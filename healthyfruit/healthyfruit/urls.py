@@ -23,5 +23,6 @@ urlpatterns = [
     path('shop/', include(('shop.urls', 'shop'), namespace='shop')),  # 购物车模块
     path('order/', include(('order.urls', 'order'), namespace='order')),  # 订单模块
     path('goods/', include(('goods.urls', 'goods'), namespace='goods')),  # 商品模块
+    path('search', include('haystack.urls')),  # 全文检索
 
 ]
