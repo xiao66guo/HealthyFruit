@@ -1,4 +1,5 @@
 {% extends 'base_no_shop.html' %}
+{% load static from staticfiles %}
 {% block title %}天天生鲜-购物车{% endblock title %}
 {% block body %}
 	<div class="total_count">全部商品<em>{{ total_count }}</em>件</div>
@@ -38,3 +39,49 @@
 		<li class="col04"><a href="place_order.html">去结算</a></li>
 	</ul>
 {% endblock body %}
+{% block bottomfiles %}
+    <script src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+    <script>
+        // 计算被选中的商品的总件数和总价格
+        function updat_total_priceandcount() {
+            var total_count = 0
+            var total_amount = 0
+            // 获取被选中商品所在的ul元素
+            $('.cart_list_td').find(':checked').parents('ul').each(function () {
+                var count = $(this).find('.num_show').val()
+                var amount = $(this).children('.col07').text()
+
+                total_count += parseInt(count)
+                total_amount += parseFloat(amount)
+            })
+            // 设置被选中的商品的总数量和总价格
+            $('.settlements').find('em').text(total_amount)
+            $('.settlements').find('b').text(total_count)
+        }
+
+        // 商品的全选和取消全选
+        $('.settlements').find(':checkbox').change(function () {
+            // 获取全选的状态
+            var is_checked = $(this).prop('checked')
+            // 把商品状态设置为全选状态
+            $('.cart_list_td').find(':checkbox').each(function () {
+                $(this).prop('checked', is_checked)
+            })
+            // 更新被选中的商品的总件数和总价格
+            updat_total_priceandcount()
+        })
+
+        $('.cart_list_td').find(':checkbox').change(function () {
+            var all_length = $('.cart_list_td').find(':checkbox').length
+            var checked_len = $('.cart_list_td').find(':checked').length
+
+            is_checked = true
+            if (all_length > checked_len){
+                is_checked = false
+            }
+            $('.settlements').find(':checkbox').prop('checked', is_checked)
+            // 更新被选中的商品的总件数和总价格
+            updat_total_priceandcount()
+        })
+    </script>
+{% endblock bottomfiles %}
