@@ -1,5 +1,6 @@
 {% extends 'base_detail_list.html' %}
 {% block title %}天天生鲜-商品详情{% endblock title %}
+{% load static from staticfiles %}
 {% block main_content %}
 	<div class="breadcrumb">
 		<a href="#">全部分类</a>
@@ -90,8 +91,56 @@
 	<div class="add_jump"></div>
 {% endblock bottom %}
 {% block bottomfiles %}
-	<script type="text/javascript" src="js/jquery-1.12.2.js"></script>
+	<script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
 	<script type="text/javascript">
+        // 商品增加的数目
+        $('.add').click(function () {
+            // 获取商品的数量，进行增加并重新赋值
+            var count = $('.num_show').val()
+            count = parseInt(count) + 1
+            $('.num_show').val(count)
+            // 更新商品的总价
+            update_sku_amount()
+        })
+
+        // 商品数目的减少
+         $('.minus').click(function () {
+            // 获取商品的数量，进行增加并重新赋值
+            var count = $('.num_show').val()
+            count = parseInt(count) - 1
+             if (count <= 0){
+                count = 1
+             }
+            $('.num_show').val(count)
+            // 更新商品的总价
+            update_sku_amount()
+        })
+
+        // 计算商品的总价
+        function update_sku_amount() {
+            // 获取商品的价格
+            var price =  $('.show_pirze').children('em').text()
+            // 获取商品的数量
+            var count = $('.num_show').val()
+            // 计算商品的总价
+            var amountPrice = parseFloat(price) * parseInt(count)
+            // 重新赋值
+            $('.total').children('em').text(amountPrice.toFixed(2))
+        }
+
+        // 对用户手动输入的数量进行判断
+        $('.num_show').blur(function () {
+            // 获取用户手动输入的内容
+            var count = $(this).val()
+            // 判断
+            if (isNaN(count) || count.trim().length == 0 || parseInt(count) <=0){
+                count = 1
+            }
+            $('.num_show').val(parseInt(count))
+            // 更新商品的总价
+            update_sku_amount()
+        })
+
 		var $add_x = $('#add_cart').offset().top;
 		var $add_y = $('#add_cart').offset().left;
 
