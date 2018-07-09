@@ -28,7 +28,7 @@
 			</div>
 		</li>
 		<li class="col07">{{ sku.amount }}元</li>
-		<li class="col08"><a href="javascript:;">删除</a></li>
+		<li class="col08"><a href="javascript:;" sku_id="{{ sku.id }}">删除</a></li>
 	</ul>
     {% endfor %}
 
@@ -210,6 +210,39 @@
                 $(this).val(pre_count)
             }
         })
+
+
+        // 删除购物车中的商品
+        $('.cart_list_td').children('.col08').children('a').click(function () {
+            // 获取删除商品记录的ID
+            var sku_id = $(this).attr('sku_id')
+            var csrf = $('input[name="csrfmiddlewaretoken"]').val()
+            var params = {'sku_id': sku_id, 'csrfmiddlewaretoken': csrf}
+            // 获取删除标签所在的ul
+            var sku_ul = $(this).parents('ul')
+
+            $.post('/shop/delete', params, function (data) {
+                if (data.res == 3){     // 删除成功
+                    // 删除元素自身以及子元素
+                    sku_ul.remove()
+                    // 获取删除商品的选中状态
+                    var is_checked = sku_ul.find(':checkbox').prop('checked')
+                    if (is_checked){
+                        update_total_priceandcount()
+                    }
+                    // 对商品的总数进行更新
+                    $('.total_count').children('em').text(data.shop_count)
+                }else{  // 删除失败
+                    alert(data.msg)
+                }
+            })
+
+
+
+        })
+
+
+
 
 
 

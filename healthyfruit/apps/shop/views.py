@@ -140,12 +140,50 @@ class ShopUpdateView(View):
         # 更新购物车中商品的数目
         conn.hset(shop_key, sku_id, count)
 
+        # 计算购物车中商品的总件数
         shop_count = 0
         shop_vals = conn.hvals(shop_key)
         for val in shop_vals:
             shop_count += int(val)
 
-
-
         return JsonResponse({'res': 5, 'shop_count': shop_count, 'msg': '更新成功'})
+
+
+# 采用ajax post请求（商品ID<sku_id>)
+# 删除购物车中的商品
+class ShopDeleteView(View):
+    def post(self, request):
+        # 获取登录的用户
+        user = request.user
+        if not user.is_authenticated:
+            return JsonResponse({'res': 1, 'msg': '用户为登录'})
+
+        # 接收参数
+        sku_id = request.POST.get('sku_id')
+
+        # 对接收到的参数进行校验
+        if not all([sku_id]):
+            return JsonResponse({'res': 1, 'msg': '数据不完整'})
+
+        # 对商品的id进行判断
+        try:
+            sku = GoodsSKU.objects.get(id=sku_id)
+        except GoodsSKU.DoesNotExist:
+            return JsonResponse({'res': 2, 'msg': '数据不存在'})
+
+        # 删除用户的购物车记录
+        # 获取链接的对象
+        conn = get_redis_connection('default')
+        shop_key = 'shop_%d' % user.id
+        # 删除redis中用户购物车的记录
+        conn.hdel(shop_key, sku_id)
+
+        # 计算购物车中商品的总件数
+        shop_count = 0
+        shop_vals = conn.hvals(shop_key)
+        for val in shop_vals:
+            shop_count += int(val)
+
+        return JsonResponse({'res': 3, 'shop_count': shop_count, 'msg': '删除成功'})
+
 
