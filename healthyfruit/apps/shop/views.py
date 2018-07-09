@@ -108,7 +108,7 @@ class ShopUpdateView(View):
         # 接收参数
         sku_id = request.POST.get('sku_id')
         count = request.POST.get('count')
-        
+
         # 对接收到的参数进行校验
         if not all([sku_id, count]):
 

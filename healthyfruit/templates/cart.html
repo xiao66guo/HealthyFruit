@@ -118,7 +118,7 @@
             sku_ul.children('.col07').text(amount.toFixed(2)+'元')
         }
 
-        // 购物车记录的更新
+        // 购物车商品数目的增加
         $('.add').click(function () {
             // 获取更新商品的id和数量
             var count = $(this).next().val()
@@ -140,6 +140,74 @@
                 }
                 // 重新设置购物车页面上的商品的总件数
                 $('.total_count').children('em').text(total_count)
+            }
+        })
+
+        // 购物车商品数目的减少
+        $('.minus').click(function () {
+            // 获取更新商品的id和数量
+            var count = $(this).prev().val()
+            var sku_id = $(this).prev().attr('sku_id')
+
+            count = parseInt(count) - 1
+            if (count <= 0){
+                return
+            }
+            update_shop_info(sku_id, count)
+
+            // 根据更新的结果来处理
+            if (error_update == false){
+                // 重新设置购物车页面商品的数目
+                $(this).prev().val(count)
+                // 计算并设置页面上商品的小计
+                update_sku_amount($(this).parents('ul'))
+                // 判断商品的选择状态
+                var is_checked = $(this).parents('ul').find(':checkbox').prop('checked')
+                if (is_checked){
+                    update_total_priceandcount()
+                }
+                // 重新设置购物车页面上的商品的总件数
+                $('.total_count').children('em').text(total_count)
+            }
+        })
+
+        // 在用户输入之前获取输入框中的值
+        pre_count = 0
+        $('.num_show').focus(function () {
+            pre_count = $(this).val()
+        })
+
+        // 手动输入购物车商品的数目
+        $('.num_show').blur(function () {
+             // 获取更新商品的id和数量
+            var count = $(this).val()
+            var sku_id = $(this).attr('sku_id')
+
+            // 对用户输入的数字进行校验
+            if (isNaN(count) || count.trim().length == 0 || parseInt(count) <= 0){
+                // 设置商品数目为用户输入之前的数目
+                $(this).val(pre_count)
+                return
+            }
+            count = parseInt(count)
+            update_shop_info(sku_id, count)
+
+            // 根据更新的结果来处理
+            if (error_update == false){
+                // 重新设置购物车页面商品的数目
+                $(this).val(count)
+                // 计算并设置页面上商品的小计
+                update_sku_amount($(this).parents('ul'))
+                // 判断商品的选择状态
+                var is_checked = $(this).parents('ul').find(':checkbox').prop('checked')
+                if (is_checked){
+                    update_total_priceandcount()
+                }
+                // 重新设置购物车页面上的商品的总件数
+                $('.total_count').children('em').text(total_count)
+            }else {
+                // 设置商品数目为用户输入之前的数目
+                $(this).val(pre_count)
             }
         })
 
