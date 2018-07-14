@@ -10,6 +10,7 @@ from django.contrib.auth import authenticate, login, logout
 from goods.models import GoodsSKU
 from user.models import User, Address
 from django_redis import get_redis_connection
+from order.models import OrderInfo, OrderGoods
 from redis import StrictRedis
 import re
 
@@ -233,9 +234,55 @@ class UserInfoView(LoginRequiredView):
 
 # 用户中心——订单页面
 # class UserOrderView(View):
-class UserOrderView(LoginRequiredView):
-    def get(self, request):
-        return render(request, 'user_center_order.html', {'page': 'order'})
+class UserOrderView(LoginRequiredView, View):
+    def get(self, request, page):
+        # 获取登录的用户
+        user = request.user
+        # 获取用户的订单信息
+        orders = OrderInfo.objects.filter(user=user).order_by('-create_time')
+        # 获取用户购买的每个商品订单的信息
+        for order in orders:
+            # 获取order订单商品的信息
+            order_skus = OrderGoods.objects.filter(order=order)
+            # 遍历取出每个商品的小计
+            for order_sku in order_skus:
+                # 计算商品小计
+                amount = order_sku.count * order_sku.price
+                # 保存订单商品的小计
+                order_sku.amount = amount
+
+            # 获取订单状态的标题
+            order.status_name = OrderInfo.ORDER_STATUS[order.order_status]
+            # 计算订单的实付款
+            order.total_pay = order.total_price + order.transit_price
+            # 保存订单商品的信息
+            order.order_skus = order_skus
+
+        # 分页显示处理
+        from django.core.paginator import Paginator
+        paginator = Paginator(orders, 1)
+        # 对页码进行校验
+        page = int(page)
+        if page > paginator.num_pages:
+            page = 1
+        # 获取第page也的内容
+        order_page = paginator.page(page)
+
+        num_pages = paginator.num_pages
+        if num_pages < 5:
+            pages = range(1, num_pages + 1)
+        elif page <= 3:
+            pages = range(1, 6)
+        elif num_pages - page <= 2:
+            pages = range(num_pages - 4, num_pages + 1)
+        else:
+            pages = range(page - 2, page + 3)
+
+        context = {'order_page': order_page,
+                   'pages': pages,
+                   'page': 'order'}
+
+        return render(request, 'user_center_order.html', context)
 
 
 # 用户中心——地址页面
