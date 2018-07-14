@@ -127,33 +127,49 @@ class OrderCommitView(View):
             sku_ids = sku_ids.split(',')
             # 遍历获取用户所要购买的商品信息
             for sku_id in sku_ids:
-                # 根据id查询商品的信息
-                try:
-                    sku = GoodsSKU.objects.get(id=sku_id)
-                except GoodsSKU.DoesNotExist:
-                    # 将事务回滚到保存点之前
-                    transaction.savepoint_rollback(sid)
-                    return JsonResponse({'res': 4, 'msg': '商品信息错误'})
+                for i in range(3):
+                    # 根据id查询商品的信息
+                    try:
+                        sku = GoodsSKU.objects.get(id=sku_id)
 
-                # 从redis中获取用户要购买的商品数量
-                count = conn.hget(shop_key, sku_id)
+                        # sku = GoodsSKU.objects.select_for_update.get(id=sku_id)
+                    except GoodsSKU.DoesNotExist:
+                        # 将事务回滚到保存点之前
+                        transaction.savepoint_rollback(sid)
+                        return JsonResponse({'res': 4, 'msg': '商品信息错误'})
 
-                # 判断商品的库存
-                if sku.stock < int(count):
-                    transaction.savepoint_rollback(sid)
-                    return JsonResponse({'res': 6, 'msg': '商品库存不足'})
+                    # 从redis中获取用户要购买的商品数量
+                    count = conn.hget(shop_key, sku_id)
 
-                '''向 df_order_goods 中添加一条记录'''
-                OrderGoods.objects.create(order=order,
-                                          sku=sku,
-                                          count=int(count),
-                                          price=sku.price)
-                '''对商品的库存减少，销量增加'''
-                sku.stock -= int(count)
-                sku.sales += int(count)
-                '''对用户购买的商品的总数量和总价格进行累计'''
-                total_count += int(count)
-                total_price += sku.price * int(count)
+                    # 判断商品的库存
+                    if sku.stock < int(count):
+                        transaction.savepoint_rollback(sid)
+                        return JsonResponse({'res': 6, 'msg': '商品库存不足'})
+
+                    '''对商品的库存减少，销量增加'''
+                    origin_stock = sku.stock
+                    new_stock = origin_stock - int(count)
+                    new_sales = sku.sales + int(count)
+                    res = GoodsSKU.objects.filter(id=sku_id, stock=origin_stock).update(stock=new_stock, sales=new_sales)
+                    if res == 0:
+                        if i == 2:
+                            transaction.savepoint_rollback(sid)
+                            return JsonResponse({'res': 7, 'msg': '下单失败2'})
+                        continue
+
+                    '''向 df_order_goods 中添加一条记录'''
+                    OrderGoods.objects.create(order=order,
+                                              sku=sku,
+                                              count=int(count),
+                                              price=sku.price)
+                    # '''对商品的库存减少，销量增加'''
+                    # sku.stock -= int(count)
+                    # sku.sales += int(count)
+                    '''对用户购买的商品的总数量和总价格进行累计'''
+                    total_count += int(count)
+                    total_price += sku.price * int(count)
+
+                    break
 
             # TODO:更新订单信息记录中购买的商品的总数目和总金额
             order.total_count = total_count
