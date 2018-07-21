@@ -2,6 +2,7 @@
 {% load static from staticfiles %}
 {% block right_content %}
 		<div class="right_content clearfix">
+             {% csrf_token %}
 				<h3 class="common_title2">全部订单</h3>
                 {% for order in order_page %}
 				<ul class="order_list_th w978 clearfix">
@@ -21,11 +22,12 @@
 									<li class="col03">{{ order_sku.count }}</li>
 									<li class="col04">{{ order_sku.amount }}元</li>
 								</ul>
+
                                 {% endfor %}
 							</td>
 							<td width="15%">{{ order.total_pay }}元(含运费:{{ order.transit_price }})</td>
 							<td width="15%">{{ order.status_name }}</td>
-							<td width="15%"><a href="#" class="oper_btn">去付款</a></td>
+							<td width="15%"><a href="#" order_id="{{ order.order_id }}" status="{{ order.order_status }}"class="oper_btn">去付款</a></td>
 						</tr>
 					</tbody>
 				</table>
@@ -46,3 +48,45 @@
 				</div>
 		</div>
 {% endblock right_content %}
+{% block bottomfiles %}
+    <script src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+    <script>
+        $('.oper_btn').each(function () {
+        // 获取订单支付状态
+        var status = $(this).attr('status')
+        // 订单状态
+        var status_dict = {'1':'去付款', '2':'待发货', '3':'查看物流', '4':'去评价', '5':'已完成'}
+        // 设置oper_btn a标签的内容
+        $(this).text(status_dict[status])
+    })
+
+        $('.oper_btn').click(function () {
+            var status = $(this).attr('status')
+            if (status == 1){
+                // 获取订单ID
+                var order_id = $(this).attr('order_id')
+                var csrf = $('input[name="csrfmiddlewaretoken"]').val()
+
+                var params = {'order_id': order_id, 'csrfmiddlewaretoken': csrf}
+                $.post('/order/pay', params, function (data) {
+                    if (data.res == 3){
+                        window.open(data.pay_url)
+                        // 获取用户支付的结果
+                        $.post('/order/check', params, function (data) {
+                            if (data.res == 3){
+                                alert('支付成功')
+                                location.reload()
+                            }else{
+                                alert('支付失败')
+                            }
+                        })
+                    }else{
+                        alert(data.msg)
+                    }
+                })
+            }else if (status == 4){
+                // 去评价
+            }
+        })
+    </script>
+{% endblock bottomfiles %}

@@ -197,3 +197,7 @@ HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
 # 指定搜索结果每页显示的数目
 HAYSTACK_SEARCH_RESULT_PER_PAGE = 1
+
+# 设置应用的私钥文件路径和支付宝的公钥文件路径
+APP_PRIVATE_KEY_PATH = os.path.join(BASE_DIR, 'apps/order/app_private_key.pem')
+ALIPAY_PUBLIC_KEY_PATH = os.path.join(BASE_DIR, 'apps/order/alipay_public_key.pem')
