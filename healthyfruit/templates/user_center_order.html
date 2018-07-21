@@ -51,6 +51,15 @@
 {% block bottomfiles %}
     <script src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
     <script>
+        $('.oper_btn').each(function () {
+        // 获取订单支付状态
+        var status = $(this).attr('status')
+        // 订单状态
+        var status_dict = {'1':'去付款', '2':'待发货', '3':'查看物流', '4':'去评价', '5':'已完成'}
+        // 设置oper_btn a标签的内容
+        $(this).text(status_dict[status])
+    })
+
         $('.oper_btn').click(function () {
             var status = $(this).attr('status')
             if (status == 1){
@@ -60,14 +69,23 @@
 
                 var params = {'order_id': order_id, 'csrfmiddlewaretoken': csrf}
                 $.post('/order/pay', params, function (data) {
-                    if (3 == data.res){
+                    if (data.res == 3){
                         window.open(data.pay_url)
+                        // 获取用户支付的结果
+                        $.post('/order/check', params, function (data) {
+                            if (data.res == 3){
+                                alert('支付成功')
+                                location.reload()
+                            }else{
+                                alert('支付失败')
+                            }
+                        })
                     }else{
                         alert(data.msg)
                     }
                 })
-            }else {
-                alert('错误')
+            }else if (status == 4){
+                // 去评价
             }
         })
     </script>
