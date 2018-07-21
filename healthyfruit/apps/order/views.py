@@ -10,6 +10,9 @@ from utils.mini import LoginRequiredView
 from goods.models import GoodsSKU
 from order.models import OrderInfo, OrderGoods
 from datetime import datetime
+from django.conf import settings
+
+from alipay import AliPay
 
 
 # 提交订单页面
@@ -103,7 +106,7 @@ class OrderCommitView(View):
         order_id = datetime.now().strftime('%Y%m%d%H%M%S') + str(user.id)
 
         # 运费
-        trans_price = 0
+        trans_price = 10
         # 订单中商品的总数量和总价格
         total_count = 0
         total_price = 0
@@ -183,6 +186,59 @@ class OrderCommitView(View):
         conn.hdel(shop_key, *sku_ids)
 
         return JsonResponse({'res': 5, 'msg': '订单创建成功'})
+
+
+# 订单支付
+class OrderPayView(View):
+
+    def post(self, request):
+        # 获取并验证登录用户
+        user = request.user
+        if not user.is_authenticated:
+            return JsonResponse({'res': 0, 'msg': '用户未登录'})
+
+        # 接收参数
+        order_id = request.POST.get('order_id')
+
+        # 参数校验
+        if not all([order_id]):
+            return JsonResponse({'res': 1, 'msg': '参数不正确'})
+
+        # 校验订单信息
+        try:
+           order = OrderInfo.objects.get(order_id=order_id,
+                                         user=user,
+                                         order_status=1,
+                                         pay_method=3)
+        except OrderInfo.DoesNotExist:
+            return JsonResponse({'res': 2, 'msg': '订单不存在'})
+
+        # 调用支付宝的下单支付接口
+        app_private_key_string = open(settings.APP_PRIVATE_KEY_PATH).read()
+        alipay_public_key_string = open(settings.ALIPAY_PUBLIC_KEY_PATH).read()
+
+        alipay = AliPay(
+            appid="2016091900545531",
+            app_notify_url=None,  # 默认回调url
+            app_private_key_string=app_private_key_string,
+            alipay_public_key_string=alipay_public_key_string,  # 支付宝的公钥，验证支付宝回传消息使用，不是你自己的公钥,
+            sign_type="RSA2",  # RSA 或者 RSA2
+            debug=True,        # 默认False
+        )
+        total_pay = order.total_price + order.transit_price
+        # 调用支付宝的 alipay.trade.page.pay 接口
+        # 电脑网站支付，需要跳转到https://openapi.alipay.com/gateway.do? + order_string
+        order_string = alipay.api_alipay_trade_page_pay(
+            out_trade_no=order_id,                          # 订单id
+            total_amount=str(total_pay),            # 订单总金额
+            subject='天天鲜果%s' % order_id,
+            return_url=None,
+            notify_url=None,                                # 可选, 不填则使用默认notify url
+        )
+        # 支付页面的地址
+        pay_url = 'https://openapi.alipaydev.com/gateway.do?' + order_string
+        return JsonResponse({'res': 3, 'pay_url': pay_url})
+
 
 
 
