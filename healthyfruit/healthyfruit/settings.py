@@ -25,9 +25,9 @@ sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 SECRET_KEY = 'a(=&96q_u+1$he%%w9fs&%e*pb911i##4a(j-dj4rogktp%#%#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -136,6 +136,8 @@ STATIC_URL = '/static/'
 
 # 设置静态文件的存放目录
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+# 指定收集静态文件存放的目录
+STATIC_ROOT = '/var/healthyfruit/static'
 
 # 富文本编辑器的配置
 TINYMCE_DEFAULT_CONFIG = {
