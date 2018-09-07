@@ -1,8 +1,14 @@
 # HealthyFruit
 
-## Django Web的项目
+## Django Web方面的项目
 
 ### 依赖的库有：
+## Django==2.0.5
+
+## django-haystack==2.8.1
+## django-redis==4.9.0
+## django-redis-sessions==0.5.6
+## django-tinymce==2.6.0
 amqp==2.3.2
 
 billiard==3.5.0.3
@@ -10,11 +16,7 @@ billiard==3.5.0.3
 celery==4.1.1
 certifi==2018.4.16
 chardet==3.0.4
-Django==2.0.5
-django-haystack==2.8.1
-django-redis==4.9.0
-django-redis-sessions==0.5.6
-django-tinymce==2.6.0
+
 fdfs-client-py==1.2.6
 idna==2.7
 itsdangerous==0.24
