@@ -1,9 +1,12 @@
 # HealthyFruit
 
-Django Web的项目
-依赖的库有：
+## Django Web的项目
+
+### 依赖的库有：
 amqp==2.3.2
+
 billiard==3.5.0.3
+
 celery==4.1.1
 certifi==2018.4.16
 chardet==3.0.4
